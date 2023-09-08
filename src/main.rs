@@ -168,28 +168,30 @@ fn passengers_view() -> Box<dyn View> {
     .into_boxed_view()
 }
 
+fn airline_seating_view() -> Box<dyn View> {
+    Dialog::new()
+        .title("Advanced Airline Seating Systems®")
+        .button("Ok", |s| s.quit())
+        .content(
+            LinearLayout::vertical()
+                .child(
+                    LinearLayout::horizontal()
+                        .child(map_view())
+                        .child(costs_view()),
+                )
+                .child(passengers_view())
+                .child(Button::new("Board Passenger", |_| ()))
+                .child(DummyView)
+                .child(TextView::new("©1960s Fresh Airlines").center()),
+        )
+        .into_boxed_view()
+}
+
 fn main() -> Result<(), std::io::Error> {
     let mut app = Cursive::default();
 
     app.set_user_data(FlightInfo::default());
-
-    app.add_layer(
-        Dialog::new()
-            .title("Advanced Airline Seating Systems®")
-            .button("Ok", |s| s.quit())
-            .content(
-                LinearLayout::vertical()
-                    .child(
-                        LinearLayout::horizontal()
-                            .child(map_view())
-                            .child(costs_view()),
-                    )
-                    .child(passengers_view())
-                    .child(Button::new("Board Passenger", |_| ()))
-                    .child(DummyView)
-                    .child(TextView::new("©1960s Fresh Airlines").center()),
-            ),
-    );
+    app.add_layer(airline_seating_view());
 
     let backend_init = || -> std::io::Result<Box<dyn cursive::backend::Backend>> {
         let backend = cursive::backends::crossterm::Backend::init()?;
