@@ -120,6 +120,54 @@ fn map_view() -> Box<dyn View> {
     .into_boxed_view()
 }
 
+fn passengers_view() -> Box<dyn View> {
+    Panel::new(
+        LinearLayout::vertical()
+            .child(TextView::new("Name                 FFID    Seat"))
+            .child(
+                LinearLayout::horizontal()
+                    .child(EditView::new().with_name("passenger_name").fixed_width(20))
+                    .child(TextView::new(" "))
+                    .child(
+                        EditView::new()
+                            .max_content_width(6)
+                            .fixed_width(7)
+                            .with_name("passenger_ffid"),
+                    )
+                    .child(TextView::new(" "))
+                    .child(
+                        SelectView::new()
+                            .popup()
+                            .item_str("1")
+                            .item_str("2")
+                            .item_str("3")
+                            .item_str("4")
+                            .item_str("5")
+                            .item_str("6")
+                            .item_str("7")
+                            .item_str("8")
+                            .item_str("9")
+                            .with_name("passenger_seat_number"),
+                    )
+                    .child(TextView::new(" "))
+                    .child(
+                        SelectView::new()
+                            .popup()
+                            .item_str("A")
+                            .item_str("B")
+                            .item_str("C")
+                            .item_str("D")
+                            .with_name("passenger_seat_letter"),
+                    )
+                    .child(TextView::new(" "))
+                    .child(Button::new("Unboard", |_| ()).with_name("passenger_remove_button")),
+            )
+            .scrollable(),
+    )
+    .title("Passengers")
+    .into_boxed_view()
+}
+
 fn main() -> Result<(), std::io::Error> {
     let mut app = Cursive::default();
 
@@ -133,65 +181,10 @@ fn main() -> Result<(), std::io::Error> {
                 LinearLayout::vertical()
                     .child(
                         LinearLayout::horizontal()
-                            // SEATING
                             .child(map_view())
-                            // COSTS
                             .child(costs_view()),
                     )
-                    // PASSENGERS
-                    .child(
-                        Panel::new(
-                            LinearLayout::vertical()
-                                .child(TextView::new("Name                 FFID    Seat"))
-                                .child(
-                                    LinearLayout::horizontal()
-                                        .child(
-                                            EditView::new()
-                                                .with_name("passenger_name")
-                                                .fixed_width(20),
-                                        )
-                                        .child(TextView::new(" "))
-                                        .child(
-                                            EditView::new()
-                                                .max_content_width(6)
-                                                .fixed_width(7)
-                                                .with_name("passenger_ffid"),
-                                        )
-                                        .child(TextView::new(" "))
-                                        .child(
-                                            SelectView::new()
-                                                .popup()
-                                                .item_str("1")
-                                                .item_str("2")
-                                                .item_str("3")
-                                                .item_str("4")
-                                                .item_str("5")
-                                                .item_str("6")
-                                                .item_str("7")
-                                                .item_str("8")
-                                                .item_str("9")
-                                                .with_name("passenger_seat_number"),
-                                        )
-                                        .child(TextView::new(" "))
-                                        .child(
-                                            SelectView::new()
-                                                .popup()
-                                                .item_str("A")
-                                                .item_str("B")
-                                                .item_str("C")
-                                                .item_str("D")
-                                                .with_name("passenger_seat_letter"),
-                                        )
-                                        .child(TextView::new(" "))
-                                        .child(
-                                            Button::new("Unboard", |_| ())
-                                                .with_name("passenger_remove_button"),
-                                        ),
-                                )
-                                .scrollable(),
-                        )
-                        .title("Passengers"),
-                    )
+                    .child(passengers_view())
                     .child(Button::new("Board Passenger", |_| ()))
                     .child(DummyView)
                     .child(TextView::new("©1960s Fresh Airlines").center()),
