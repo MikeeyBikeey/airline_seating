@@ -10,6 +10,10 @@ use cursive::{
 
 pub mod flight_info;
 pub use flight_info::{FlightInfo, GetFlightInfo as _};
+pub mod passenger;
+pub use passenger::Passenger;
+
+// COSTS VIEW
 
 fn update_total_cost(cursive: &mut Cursive) {
     let total_cost = cursive.flight_info().total_cost();
@@ -53,8 +57,6 @@ fn on_edit_bag_count(cursive: &mut Cursive, _text: &str, _size: usize) {
         update_total_cost(cursive);
     }
 }
-
-// VIEWS
 
 fn costs_view() -> Box<dyn View> {
     const DIGITS: usize = 4;
@@ -100,6 +102,8 @@ fn costs_view() -> Box<dyn View> {
     .into_boxed_view()
 }
 
+// MAP VIEW
+
 fn map_view() -> Box<dyn View> {
     Panel::new(PaddedView::lrtb(
         2,
@@ -121,6 +125,30 @@ fn map_view() -> Box<dyn View> {
     ))
     .title("Map")
     .into_boxed_view()
+}
+
+// PASSENGERS VIEW
+
+fn on_board_passenger(cursive: &mut Cursive) {
+    let flight_info = cursive.flight_info();
+    flight_info.passengers.push(Passenger::default());
+    cursive.call_on_name("passengers", |passengers: &mut LinearLayout| {
+        passengers.add_child(passenger_view());
+    });
+    update_total_cost(cursive);
+}
+
+fn on_unboard_passenger(cursive: &mut Cursive) {
+    let passenger_index = cursive.call_on_name("passengers", |passengers: &mut LinearLayout| {
+        let passenger_index = passengers.get_focus_index();
+        passengers.remove_child(passenger_index);
+        passenger_index
+    });
+    if let Some(passenger_index) = passenger_index {
+        let flight_info = cursive.flight_info();
+        flight_info.passengers.remove(passenger_index - 1); // `- 1` because the first child isn't a passenger
+    }
+    update_total_cost(cursive);
 }
 
 fn passenger_view() -> Box<dyn View> {
@@ -161,7 +189,7 @@ fn passenger_view() -> Box<dyn View> {
                 .with_name("passenger_seat_column"),
         )
         .child(TextView::new(" "))
-        .child(Button::new("Unboard", |_| ()).with_name("passenger_remove_button"))
+        .child(Button::new("Unboard", on_unboard_passenger).with_name("passenger_remove_button"))
         .into_boxed_view()
 }
 
@@ -169,12 +197,14 @@ fn all_passengers_view() -> Box<dyn View> {
     Panel::new(
         LinearLayout::vertical()
             .child(TextView::new("Name                 FFID    Seat"))
-            .child(passenger_view())
+            .with_name("passengers")
             .scrollable(),
     )
     .title("Passengers")
     .into_boxed_view()
 }
+
+// AIRLINE SEATING VIEW
 
 fn airline_seating_view() -> Box<dyn View> {
     Dialog::new()
@@ -188,7 +218,7 @@ fn airline_seating_view() -> Box<dyn View> {
                         .child(costs_view()),
                 )
                 .child(all_passengers_view())
-                .child(Button::new("Board Passenger", |_| ()))
+                .child(Button::new("Board Passenger", on_board_passenger))
                 .child(DummyView)
                 .child(TextView::new("©1960s Fresh Airlines").center()),
         )
@@ -201,6 +231,7 @@ fn main() -> Result<(), std::io::Error> {
     app.set_user_data(FlightInfo::default());
     app.add_layer(airline_seating_view());
 
+    // This particular backend helps to reduce jittering
     let backend_init = || -> std::io::Result<Box<dyn cursive::backend::Backend>> {
         let backend = cursive::backends::crossterm::Backend::init()?;
         let buffered_backend = cursive_buffered_backend::BufferedBackend::new(backend);
