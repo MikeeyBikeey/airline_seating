@@ -123,48 +123,53 @@ fn map_view() -> Box<dyn View> {
     .into_boxed_view()
 }
 
-fn passengers_view() -> Box<dyn View> {
+fn passenger_view() -> Box<dyn View> {
+    LinearLayout::horizontal()
+        .child(EditView::new().with_name("passenger_name").fixed_width(20))
+        .child(TextView::new(" "))
+        .child(
+            EditView::new()
+                .max_content_width(6)
+                .fixed_width(7)
+                .with_name("passenger_ffid"),
+        )
+        .child(TextView::new(" "))
+        .child(
+            SelectView::new()
+                .popup()
+                .item_str("*")
+                .item_str("1")
+                .item_str("2")
+                .item_str("3")
+                .item_str("4")
+                .item_str("5")
+                .item_str("6")
+                .item_str("7")
+                .item_str("8")
+                .item_str("9")
+                .with_name("passenger_seat_row"),
+        )
+        .child(TextView::new(" "))
+        .child(
+            SelectView::new()
+                .popup()
+                .item_str("*")
+                .item_str("A")
+                .item_str("B")
+                .item_str("C")
+                .item_str("D")
+                .with_name("passenger_seat_column"),
+        )
+        .child(TextView::new(" "))
+        .child(Button::new("Unboard", |_| ()).with_name("passenger_remove_button"))
+        .into_boxed_view()
+}
+
+fn all_passengers_view() -> Box<dyn View> {
     Panel::new(
         LinearLayout::vertical()
             .child(TextView::new("Name                 FFID    Seat"))
-            .child(
-                LinearLayout::horizontal()
-                    .child(EditView::new().with_name("passenger_name").fixed_width(20))
-                    .child(TextView::new(" "))
-                    .child(
-                        EditView::new()
-                            .max_content_width(6)
-                            .fixed_width(7)
-                            .with_name("passenger_ffid"),
-                    )
-                    .child(TextView::new(" "))
-                    .child(
-                        SelectView::new()
-                            .popup()
-                            .item_str("1")
-                            .item_str("2")
-                            .item_str("3")
-                            .item_str("4")
-                            .item_str("5")
-                            .item_str("6")
-                            .item_str("7")
-                            .item_str("8")
-                            .item_str("9")
-                            .with_name("passenger_seat_number"),
-                    )
-                    .child(TextView::new(" "))
-                    .child(
-                        SelectView::new()
-                            .popup()
-                            .item_str("A")
-                            .item_str("B")
-                            .item_str("C")
-                            .item_str("D")
-                            .with_name("passenger_seat_letter"),
-                    )
-                    .child(TextView::new(" "))
-                    .child(Button::new("Unboard", |_| ()).with_name("passenger_remove_button")),
-            )
+            .child(passenger_view())
             .scrollable(),
     )
     .title("Passengers")
@@ -182,7 +187,7 @@ fn airline_seating_view() -> Box<dyn View> {
                         .child(map_view())
                         .child(costs_view()),
                 )
-                .child(passengers_view())
+                .child(all_passengers_view())
                 .child(Button::new("Board Passenger", |_| ()))
                 .child(DummyView)
                 .child(TextView::new("©1960s Fresh Airlines").center()),
