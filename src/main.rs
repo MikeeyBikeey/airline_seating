@@ -97,6 +97,29 @@ fn costs_view() -> Box<dyn View> {
     .into_boxed_view()
 }
 
+fn map_view() -> Box<dyn View> {
+    Panel::new(PaddedView::lrtb(
+        2,
+        2,
+        1,
+        1,
+        TextView::new(concat!(
+            "   A  B  C  D\n",
+            "1  _  _  _  _\n",
+            "2  _  _  _  _\n",
+            "3  _  _  _  _\n",
+            "4  _  _  _  _\n",
+            "5  _  _  _  _\n",
+            "6  _  _  _  _\n",
+            "7  _  _  _  _\n",
+            "8  _  _  _  _\n",
+            "9  _  _  _  _",
+        )),
+    ))
+    .title("Map")
+    .into_boxed_view()
+}
+
 fn main() -> Result<(), std::io::Error> {
     let mut app = Cursive::default();
 
@@ -111,27 +134,7 @@ fn main() -> Result<(), std::io::Error> {
                     .child(
                         LinearLayout::horizontal()
                             // SEATING
-                            .child(
-                                Panel::new(PaddedView::lrtb(
-                                    2,
-                                    2,
-                                    1,
-                                    1,
-                                    TextView::new(concat!(
-                                        "   A  B  C  D\n",
-                                        "1  _  _  _  _\n",
-                                        "2  _  _  _  _\n",
-                                        "3  _  _  _  _\n",
-                                        "4  _  _  _  _\n",
-                                        "5  _  _  _  _\n",
-                                        "6  _  _  _  _\n",
-                                        "7  _  _  _  _\n",
-                                        "8  _  _  _  _\n",
-                                        "9  _  _  _  _",
-                                    )),
-                                ))
-                                .title("Map"),
-                            )
+                            .child(map_view())
                             // COSTS
                             .child(costs_view()),
                     )
