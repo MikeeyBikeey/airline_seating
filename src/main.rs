@@ -1,5 +1,6 @@
 use cursive::{
     traits::*,
+    utils::lines::simple::Row,
     view::IntoBoxedView,
     views::{
         Button, Dialog, DummyView, EditView, LinearLayout, ListView, PaddedView, Panel, SelectView,
@@ -224,15 +225,11 @@ fn passenger_view() -> Box<dyn View> {
             SelectView::new()
                 .popup()
                 .item_str("*")
-                .item_str("1")
-                .item_str("2")
-                .item_str("3")
-                .item_str("4")
-                .item_str("5")
-                .item_str("6")
-                .item_str("7")
-                .item_str("8")
-                .item_str("9")
+                .with(|view| {
+                    for row in ROWS {
+                        view.add_item_str(row.to_string());
+                    }
+                })
                 .on_submit(on_submit_passenger_seat_row)
                 .with_name("passenger_seat_row"),
         )
@@ -241,10 +238,11 @@ fn passenger_view() -> Box<dyn View> {
             SelectView::new()
                 .popup()
                 .item_str("*")
-                .item_str("A")
-                .item_str("B")
-                .item_str("C")
-                .item_str("D")
+                .with(|view| {
+                    for column in COLUMNS {
+                        view.add_item_str(column.to_string());
+                    }
+                })
                 .on_submit(on_submit_passenger_seat_column)
                 .with_name("passenger_seat_column"),
         )
