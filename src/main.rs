@@ -13,6 +13,9 @@ pub use flight_info::{FlightInfo, GetFlightInfo as _};
 pub mod passenger;
 pub use passenger::Passenger;
 
+const COLUMNS: [char; 4] = ['A', 'B', 'C', 'D'];
+const ROWS: [char; 9] = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
 // COSTS VIEW
 
 fn update_total_cost(cursive: &mut Cursive) {
@@ -104,6 +107,37 @@ fn costs_view() -> Box<dyn View> {
 
 // MAP VIEW
 
+fn is_seat_taken(passengers: &[Passenger], column: char, row: char) -> bool {
+    for passenger in passengers {
+        if passenger.seat.column == column && passenger.seat.row == row {
+            return true;
+        }
+    }
+    false
+}
+
+/// Updates which seats are taken on the displayed map.
+/// This function is highly unoptimized, but it works!
+fn update_map(cursive: &mut Cursive) {
+    let passengers = &cursive.flight_info().passengers;
+    let mut text = " ".to_string();
+    for row in COLUMNS {
+        text += &format!("  {}", row);
+    }
+    for row in ROWS {
+        text += &format!("\n{}", row);
+        for column in COLUMNS {
+            text += "  ";
+            if is_seat_taken(passengers, column, row) {
+                text += "X";
+            } else {
+                text += "_";
+            }
+        }
+    }
+    cursive.call_on_name("map", |map: &mut TextView| map.set_content(text));
+}
+
 fn map_view() -> Box<dyn View> {
     Panel::new(PaddedView::lrtb(
         2,
@@ -121,13 +155,20 @@ fn map_view() -> Box<dyn View> {
             "7  _  _  _  _\n",
             "8  _  _  _  _\n",
             "9  _  _  _  _",
-        )),
+        ))
+        .with_name("map"),
     ))
     .title("Map")
     .into_boxed_view()
 }
 
 // PASSENGERS VIEW
+
+fn focused_passenger_index(cursive: &mut Cursive) -> Option<usize> {
+    cursive.call_on_name("passengers", |passengers: &mut LinearLayout| {
+        passengers.get_focus_index() - 1 // `- 1` because the first child isn't a passenger
+    })
+}
 
 fn on_board_passenger(cursive: &mut Cursive) {
     let flight_info = cursive.flight_info();
@@ -149,6 +190,23 @@ fn on_unboard_passenger(cursive: &mut Cursive) {
         flight_info.passengers.remove(passenger_index - 1); // `- 1` because the first child isn't a passenger
     }
     update_total_cost(cursive);
+    update_map(cursive);
+}
+
+fn on_submit_passenger_seat_row(cursive: &mut Cursive, row: &str) {
+    if let Some(passenger_index) = focused_passenger_index(cursive) {
+        let passenger = &mut cursive.flight_info().passengers[passenger_index];
+        passenger.seat.row = row.chars().next().unwrap();
+    }
+    update_map(cursive);
+}
+
+fn on_submit_passenger_seat_column(cursive: &mut Cursive, column: &str) {
+    if let Some(passenger_index) = focused_passenger_index(cursive) {
+        let passenger = &mut cursive.flight_info().passengers[passenger_index];
+        passenger.seat.column = column.chars().next().unwrap();
+    }
+    update_map(cursive);
 }
 
 fn passenger_view() -> Box<dyn View> {
@@ -175,6 +233,7 @@ fn passenger_view() -> Box<dyn View> {
                 .item_str("7")
                 .item_str("8")
                 .item_str("9")
+                .on_submit(on_submit_passenger_seat_row)
                 .with_name("passenger_seat_row"),
         )
         .child(TextView::new(" "))
@@ -186,6 +245,7 @@ fn passenger_view() -> Box<dyn View> {
                 .item_str("B")
                 .item_str("C")
                 .item_str("D")
+                .on_submit(on_submit_passenger_seat_column)
                 .with_name("passenger_seat_column"),
         )
         .child(TextView::new(" "))
@@ -196,7 +256,9 @@ fn passenger_view() -> Box<dyn View> {
 fn all_passengers_view() -> Box<dyn View> {
     Panel::new(
         LinearLayout::vertical()
-            .child(TextView::new("Name                 FFID    Seat"))
+            .child(TextView::new(
+                "Name                 FFID    Seat             ",
+            ))
             .with_name("passengers")
             .scrollable(),
     )
