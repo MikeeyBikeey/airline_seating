@@ -18,6 +18,8 @@ fn update_total_cost(cursive: &mut Cursive) {
     });
 }
 
+/// Assures that the `EditView`'s contents represent an integer.
+/// Returns the integer value of the contents.
 fn assure_edit_view_is_integer(edit_view: &mut EditView) -> i32 {
     let text_numbers: String = edit_view
         .get_content()
@@ -55,6 +57,7 @@ fn on_edit_bag_count(cursive: &mut Cursive, _text: &str, _size: usize) {
 // VIEWS
 
 fn costs_view() -> Box<dyn View> {
+    const DIGITS: usize = 4;
     Panel::new(PaddedView::lrtb(
         2,
         2,
@@ -66,28 +69,28 @@ fn costs_view() -> Box<dyn View> {
                     .child(
                         "Ticket Cost:   $",
                         EditView::new()
-                            .max_content_width(4)
+                            .max_content_width(DIGITS)
                             .on_edit(on_edit_ticket_cost)
                             .with_name("ticket_cost")
-                            .fixed_width(5),
+                            .fixed_width(DIGITS + 1),
                     )
                     .delimiter()
                     .child(
                         "Bag Cost:      $",
                         EditView::new()
-                            .max_content_width(4)
+                            .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_cost)
                             .with_name("bag_cost")
-                            .fixed_width(5),
+                            .fixed_width(DIGITS + 1),
                     )
                     .delimiter()
                     .child(
                         "Bag Count:",
                         EditView::new()
-                            .max_content_width(4)
+                            .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_count)
                             .with_name("bag_count")
-                            .fixed_width(5),
+                            .fixed_width(DIGITS + 1),
                     )
                     .delimiter(),
             )
