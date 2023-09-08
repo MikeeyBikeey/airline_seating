@@ -1,5 +1,6 @@
 use cursive::{
     traits::*,
+    view::IntoBoxedView,
     views::{
         Button, Dialog, DummyView, EditView, LinearLayout, ListView, PaddedView, Panel, SelectView,
         TextView,
@@ -51,6 +52,51 @@ fn on_edit_bag_count(cursive: &mut Cursive, _text: &str, _size: usize) {
     }
 }
 
+// VIEWS
+
+fn costs_view() -> Box<dyn View> {
+    Panel::new(PaddedView::lrtb(
+        2,
+        2,
+        1,
+        1,
+        LinearLayout::vertical()
+            .child(
+                ListView::new()
+                    .child(
+                        "Ticket Cost:   $",
+                        EditView::new()
+                            .max_content_width(4)
+                            .on_edit(on_edit_ticket_cost)
+                            .with_name("ticket_cost")
+                            .fixed_width(5),
+                    )
+                    .delimiter()
+                    .child(
+                        "Bag Cost:      $",
+                        EditView::new()
+                            .max_content_width(4)
+                            .on_edit(on_edit_bag_cost)
+                            .with_name("bag_cost")
+                            .fixed_width(5),
+                    )
+                    .delimiter()
+                    .child(
+                        "Bag Count:",
+                        EditView::new()
+                            .max_content_width(4)
+                            .on_edit(on_edit_bag_count)
+                            .with_name("bag_count")
+                            .fixed_width(5),
+                    )
+                    .delimiter(),
+            )
+            .child(TextView::new("Total Cost: $0").with_name("total_cost")),
+    ))
+    .title("Costs")
+    .into_boxed_view()
+}
+
 fn main() -> Result<(), std::io::Error> {
     let mut app = Cursive::default();
 
@@ -87,49 +133,7 @@ fn main() -> Result<(), std::io::Error> {
                                 .title("Map"),
                             )
                             // COSTS
-                            .child(
-                                Panel::new(PaddedView::lrtb(
-                                    2,
-                                    2,
-                                    1,
-                                    1,
-                                    LinearLayout::vertical()
-                                        .child(
-                                            ListView::new()
-                                                .child(
-                                                    "Ticket Cost:   $",
-                                                    EditView::new()
-                                                        .max_content_width(4)
-                                                        .on_edit(on_edit_ticket_cost)
-                                                        .with_name("ticket_cost")
-                                                        .fixed_width(5),
-                                                )
-                                                .delimiter()
-                                                .child(
-                                                    "Bag Cost:      $",
-                                                    EditView::new()
-                                                        .max_content_width(4)
-                                                        .on_edit(on_edit_bag_cost)
-                                                        .with_name("bag_cost")
-                                                        .fixed_width(5),
-                                                )
-                                                .delimiter()
-                                                .child(
-                                                    "Bag Count:",
-                                                    EditView::new()
-                                                        .max_content_width(4)
-                                                        .on_edit(on_edit_bag_count)
-                                                        .with_name("bag_count")
-                                                        .fixed_width(5),
-                                                )
-                                                .delimiter(),
-                                        )
-                                        .child(
-                                            TextView::new("Total Cost: $0").with_name("total_cost"),
-                                        ),
-                                ))
-                                .title("Costs"),
-                            ),
+                            .child(costs_view()),
                     )
                     // PASSENGERS
                     .child(
