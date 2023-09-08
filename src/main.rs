@@ -4,10 +4,57 @@ use cursive::{
         Button, Dialog, DummyView, EditView, LinearLayout, ListView, PaddedView, Panel, SelectView,
         TextView,
     },
+    Cursive,
 };
 
+pub mod flight_info;
+pub use flight_info::{FlightInfo, GetFlightInfo as _};
+
+fn update_total_cost(cursive: &mut Cursive) {
+    let total_cost = cursive.flight_info().total_cost();
+    cursive.call_on_name("total_cost", |text_view: &mut TextView| {
+        text_view.set_content(format!("Total Cost: ${}", total_cost));
+    });
+}
+
+fn assure_edit_view_is_integer(edit_view: &mut EditView) -> i32 {
+    let text_numbers: String = edit_view
+        .get_content()
+        .chars()
+        .filter(|c| c.is_digit(10))
+        .collect();
+    edit_view.set_content(&text_numbers);
+    text_numbers.parse().unwrap_or(0)
+}
+
+fn on_edit_ticket_cost(cursive: &mut Cursive, _text: &str, _size: usize) {
+    if let Some(ticket_cost) = cursive.call_on_name("ticket_cost", assure_edit_view_is_integer) {
+        let flight_info = cursive.flight_info();
+        flight_info.ticket_cost = ticket_cost;
+        update_total_cost(cursive);
+    }
+}
+
+fn on_edit_bag_cost(cursive: &mut Cursive, _text: &str, _size: usize) {
+    if let Some(bag_cost) = cursive.call_on_name("bag_cost", assure_edit_view_is_integer) {
+        let flight_info = cursive.flight_info();
+        flight_info.bag_cost = bag_cost;
+        update_total_cost(cursive);
+    }
+}
+
+fn on_edit_bag_count(cursive: &mut Cursive, _text: &str, _size: usize) {
+    if let Some(bag_count) = cursive.call_on_name("bag_count", assure_edit_view_is_integer) {
+        let flight_info = cursive.flight_info();
+        flight_info.bag_count = bag_count;
+        update_total_cost(cursive);
+    }
+}
+
 fn main() -> Result<(), std::io::Error> {
-    let mut app = cursive::default();
+    let mut app = Cursive::default();
+
+    app.set_user_data(FlightInfo::default());
 
     app.add_layer(
         Dialog::new()
@@ -53,6 +100,7 @@ fn main() -> Result<(), std::io::Error> {
                                                     "Ticket Cost:   $",
                                                     EditView::new()
                                                         .max_content_width(4)
+                                                        .on_edit(on_edit_ticket_cost)
                                                         .with_name("ticket_cost")
                                                         .fixed_width(5),
                                                 )
@@ -61,22 +109,23 @@ fn main() -> Result<(), std::io::Error> {
                                                     "Bag Cost:      $",
                                                     EditView::new()
                                                         .max_content_width(4)
+                                                        .on_edit(on_edit_bag_cost)
                                                         .with_name("bag_cost")
                                                         .fixed_width(5),
                                                 )
                                                 .delimiter()
                                                 .child(
-                                                    "Number of Bags:",
+                                                    "Bag Count:",
                                                     EditView::new()
                                                         .max_content_width(4)
-                                                        .with_name("number_of_bags")
+                                                        .on_edit(on_edit_bag_count)
+                                                        .with_name("bag_count")
                                                         .fixed_width(5),
                                                 )
                                                 .delimiter(),
                                         )
                                         .child(
-                                            TextView::new("Total Cost: $1575")
-                                                .with_name("total_cost"),
+                                            TextView::new("Total Cost: $0").with_name("total_cost"),
                                         ),
                                 ))
                                 .title("Costs"),
