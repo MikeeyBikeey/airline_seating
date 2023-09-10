@@ -1,0 +1,39 @@
+{
+  "bag_cost": 25,
+  "bag_count": 3,
+  "ticket_cost": 375,
+  "passengers": [
+    {
+      "name": "John Lennon",
+      "ffid": "1A894D",
+      "seat": {
+        "column": "D",
+        "row": "5"
+      }
+    },
+    {
+      "name": "Yoko Ono",
+      "ffid": "76TN3A",
+      "seat": {
+        "column": "C",
+        "row": "5"
+      }
+    },
+    {
+      "name": "Benny the Bengal",
+      "ffid": "9D7A76",
+      "seat": {
+        "column": "A",
+        "row": "1"
+      }
+    },
+    {
+      "name": "Smokey the Bear",
+      "ffid": "8HH4lI",
+      "seat": {
+        "column": "D",
+        "row": "1"
+      }
+    }
+  ]
+}
