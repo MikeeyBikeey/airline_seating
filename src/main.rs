@@ -312,7 +312,7 @@ fn all_passengers_view(passengers: &[Passenger]) -> Box<dyn View> {
 
 // AIRLINE SEATING VIEW
 
-fn show_alert(cursive: &mut Cursive, message: String) {
+fn show_alert<T: Into<String>>(cursive: &mut Cursive, message: T) {
     cursive.add_layer(
         Dialog::new()
             .title("Alert")
@@ -324,7 +324,7 @@ fn show_alert(cursive: &mut Cursive, message: String) {
                 1,
                 1,
                 0,
-                TextView::new(message).fixed_width(32),
+                TextView::new(message.into()).fixed_width(32),
             )),
     )
 }
@@ -352,6 +352,8 @@ fn on_confirm_save(cursive: &mut Cursive) {
         cursive.pop_layer();
     } else if let Some(save_result) = save_result {
         show_alert(cursive, format!("Unable to save file: {}", save_result));
+    } else {
+        show_alert(cursive, "An unknown error occurred while saving file.")
     }
 }
 
@@ -372,9 +374,57 @@ fn save_view() -> Box<dyn View> {
         .into_boxed_view()
 }
 
+fn on_confirm_load(cursive: &mut Cursive) {
+    // // TODO: simplify function
+
+    // Loads and parses the flight info
+    let load_result = cursive.call_on_name(
+        "load_file_path",
+        |view: &mut EditView| -> Result<FlightInfo, Box<dyn std::error::Error>> {
+            let path = view.get_content();
+            Ok(serde_json::from_str(&std::fs::read_to_string(&*path)?)?)
+        },
+    );
+
+    // Reports errors and pops layer
+    match load_result {
+        Some(Ok(flight_info)) => {
+            cursive.pop_layer(); // pops this message view
+            cursive.pop_layer(); // (hopefully) pops airline seating view
+            cursive.add_layer(airline_seating_view(&flight_info));
+            cursive.set_user_data(flight_info);
+        }
+        Some(Err(error)) => {
+            show_alert(
+                cursive,
+                format!("Unable to load file: {}", error.to_string()),
+            );
+        }
+        None => show_alert(cursive, "An unknown error occurred while loading file."),
+    }
+}
+
+fn load_view() -> Box<dyn View> {
+    Dialog::new()
+        .title("Load File Path")
+        .button("Load", on_confirm_load)
+        .button("Cancel", |c| {
+            c.pop_layer();
+        })
+        .content(PaddedView::lrtb(
+            1,
+            1,
+            1,
+            0,
+            EditView::new().with_name("load_file_path").fixed_width(32),
+        ))
+        .into_boxed_view()
+}
+
 fn airline_seating_view(flight_info: &FlightInfo) -> Box<dyn View> {
     Dialog::new()
         .title("Advanced Airline Seating Systems®")
+        .button("Load", |s| s.add_layer(load_view()))
         .button("Save", |s| s.add_layer(save_view()))
         .button("Submit", |s| s.quit())
         .content(

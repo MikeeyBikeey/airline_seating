@@ -1,7 +1,7 @@
 use crate::Passenger;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Default, Serialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct FlightInfo {
     pub bag_cost: i32,
     pub bag_count: i32,
