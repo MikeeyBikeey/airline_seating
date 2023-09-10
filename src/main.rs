@@ -18,12 +18,13 @@ fn main() -> Result<(), std::io::Error> {
     app.add_layer(airline_seating_view(&flight_info));
     app.set_user_data(flight_info);
 
-    // This particular backend helps to reduce jittering
-    let backend_init = || -> std::io::Result<Box<dyn cursive::backend::Backend>> {
-        let backend = cursive::backends::crossterm::Backend::init()?;
-        let buffered_backend = cursive_buffered_backend::BufferedBackend::new(backend);
-        Ok(Box::new(buffered_backend))
-    };
-
     app.try_run_with(backend_init)
+}
+
+/// Backend initialization of the `cursive` crate.
+/// This particular backend helps to reduce jittering.
+fn backend_init() -> std::io::Result<Box<dyn cursive::backend::Backend>> {
+    let backend = cursive::backends::crossterm::Backend::init()?;
+    let buffered_backend = cursive_buffered_backend::BufferedBackend::new(backend);
+    Ok(Box::new(buffered_backend))
 }
