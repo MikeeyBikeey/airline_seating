@@ -2,7 +2,7 @@ use crate::{costs_view, flight::GetFlight as _, map_view, passengers_view, Fligh
 use cursive::{
     traits::*,
     view::IntoBoxedView,
-    views::{Button, Dialog, DummyView, EditView, LinearLayout, PaddedView, TextView},
+    views::{Dialog, DummyView, EditView, LinearLayout, PaddedView, TextView},
     Cursive,
 };
 
@@ -20,10 +20,6 @@ pub fn airline_seating_view(flight_info: &Flight) -> Box<dyn View> {
                         .child(costs_view(flight_info)),
                 )
                 .child(passengers_view(&flight_info.passengers))
-                .child(Button::new(
-                    "Board Passenger",
-                    passengers_view::on_board_passenger,
-                ))
                 .child(DummyView)
                 .child(TextView::new("©1960s Fresh Airlines").center()),
         )

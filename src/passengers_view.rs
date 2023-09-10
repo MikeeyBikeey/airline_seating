@@ -12,19 +12,23 @@ pub fn passengers_view(passengers: &[Passenger]) -> Box<dyn View> {
             .child(TextView::new(
                 "Name                 FFID    Seat             ",
             ))
-            .with(|layout| {
-                for passenger in passengers {
-                    layout.add_child(single_passenger_view(passenger));
-                }
-            })
-            .with_name("passengers")
-            .scrollable(),
+            .child(
+                LinearLayout::vertical()
+                    .with(|layout| {
+                        for passenger in passengers {
+                            layout.add_child(single_passenger_view(passenger));
+                        }
+                    })
+                    .with_name("passengers")
+                    .scrollable(),
+            )
+            .child(Button::new("Board Passenger", on_board_passenger)),
     )
     .title("Passengers")
     .into_boxed_view()
 }
 
-pub fn on_board_passenger(app: &mut Cursive) {
+fn on_board_passenger(app: &mut Cursive) {
     let passenger = Passenger::default();
     app.call_on_name("passengers", |passengers: &mut LinearLayout| {
         passengers.add_child(single_passenger_view(&passenger));
