@@ -210,12 +210,32 @@ fn on_submit_passenger_seat_column(cursive: &mut Cursive, column: &str) {
     update_map(cursive);
 }
 
+fn on_edit_passenger_ffid(cursive: &mut Cursive, ffid: &str, _size: usize) {
+    if let Some(passenger_index) = focused_passenger_index(cursive) {
+        let flight_info = cursive.flight_info();
+        flight_info.passengers[passenger_index].ffid = ffid.to_string();
+    }
+}
+
+fn on_edit_passenger_name(cursive: &mut Cursive, name: &str, _size: usize) {
+    if let Some(passenger_index) = focused_passenger_index(cursive) {
+        let flight_info = cursive.flight_info();
+        flight_info.passengers[passenger_index].name = name.to_string();
+    }
+}
+
 fn passenger_view() -> Box<dyn View> {
     LinearLayout::horizontal()
-        .child(EditView::new().with_name("passenger_name").fixed_width(20))
+        .child(
+            EditView::new()
+                .on_edit(on_edit_passenger_name)
+                .with_name("passenger_name")
+                .fixed_width(20),
+        )
         .child(TextView::new(" "))
         .child(
             EditView::new()
+                .on_edit(on_edit_passenger_ffid)
                 .max_content_width(6)
                 .fixed_width(7)
                 .with_name("passenger_ffid"),
