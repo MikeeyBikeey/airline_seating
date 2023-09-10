@@ -1,8 +1,5 @@
-use std::io::Write;
-
 use cursive::{
     traits::*,
-    utils::lines::simple::Row,
     view::IntoBoxedView,
     views::{
         Button, Dialog, DummyView, EditView, LinearLayout, ListView, PaddedView, Panel, SelectView,
@@ -64,7 +61,7 @@ fn on_edit_bag_count(cursive: &mut Cursive, _text: &str, _size: usize) {
     }
 }
 
-fn costs_view() -> Box<dyn View> {
+fn costs_view(flight_info: &FlightInfo) -> Box<dyn View> {
     const DIGITS: usize = 4;
     Panel::new(PaddedView::lrtb(
         2,
@@ -77,6 +74,7 @@ fn costs_view() -> Box<dyn View> {
                     .child(
                         "Ticket Cost:   $",
                         EditView::new()
+                            .content(flight_info.ticket_cost.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_ticket_cost)
                             .with_name("ticket_cost")
@@ -86,6 +84,7 @@ fn costs_view() -> Box<dyn View> {
                     .child(
                         "Bag Cost:      $",
                         EditView::new()
+                            .content(flight_info.bag_cost.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_cost)
                             .with_name("bag_cost")
@@ -95,6 +94,7 @@ fn costs_view() -> Box<dyn View> {
                     .child(
                         "Bag Count:",
                         EditView::new()
+                            .content(flight_info.bag_count.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_count)
                             .with_name("bag_count")
@@ -102,7 +102,10 @@ fn costs_view() -> Box<dyn View> {
                     )
                     .delimiter(),
             )
-            .child(TextView::new("Total Cost: $0").with_name("total_cost")),
+            .child(
+                TextView::new(format!("Total Cost: ${}", flight_info.total_cost()))
+                    .with_name("total_cost"),
+            ),
     ))
     .title("Costs")
     .into_boxed_view()
@@ -119,10 +122,20 @@ fn is_seat_taken(passengers: &[Passenger], column: char, row: char) -> bool {
     false
 }
 
-/// Updates which seats are taken on the displayed map.
-/// This function is highly unoptimized, but it works!
 fn update_map(cursive: &mut Cursive) {
-    let passengers = &cursive.flight_info().passengers;
+    // `passengers` is temporarily taken to avoid borrow issues
+    let passengers = std::mem::take(&mut cursive.flight_info().passengers);
+    cursive.call_on_name("map", |map: &mut TextView| {
+        map.set_content(create_map_display(&passengers))
+    });
+    cursive.flight_info().passengers = passengers;
+}
+
+/// Returns a `String` for displaying on the map.
+/// For updating which seats are taken on the displayed map.
+/// This function is highly unoptimized, but it works!
+fn create_map_display(passengers: &[Passenger]) -> String {
+    // TODO: optimize `update_map` function
     let mut text = " ".to_string();
     for row in COLUMNS {
         text += &format!("  {}", row);
@@ -138,28 +151,16 @@ fn update_map(cursive: &mut Cursive) {
             }
         }
     }
-    cursive.call_on_name("map", |map: &mut TextView| map.set_content(text));
+    text
 }
 
-fn map_view() -> Box<dyn View> {
+fn map_view(passengers: &[Passenger]) -> Box<dyn View> {
     Panel::new(PaddedView::lrtb(
         2,
         2,
         1,
         1,
-        TextView::new(concat!(
-            "   A  B  C  D\n",
-            "1  _  _  _  _\n",
-            "2  _  _  _  _\n",
-            "3  _  _  _  _\n",
-            "4  _  _  _  _\n",
-            "5  _  _  _  _\n",
-            "6  _  _  _  _\n",
-            "7  _  _  _  _\n",
-            "8  _  _  _  _\n",
-            "9  _  _  _  _",
-        ))
-        .with_name("map"),
+        TextView::new(create_map_display(passengers)).with_name("map"),
     ))
     .title("Map")
     .into_boxed_view()
@@ -174,11 +175,12 @@ fn focused_passenger_index(cursive: &mut Cursive) -> Option<usize> {
 }
 
 fn on_board_passenger(cursive: &mut Cursive) {
-    let flight_info = cursive.flight_info();
-    flight_info.passengers.push(Passenger::default());
+    let passenger = Passenger::default();
     cursive.call_on_name("passengers", |passengers: &mut LinearLayout| {
-        passengers.add_child(passenger_view());
+        passengers.add_child(passenger_view(&passenger));
     });
+    let flight_info = cursive.flight_info();
+    flight_info.passengers.push(passenger);
     update_total_cost(cursive);
 }
 
@@ -226,21 +228,23 @@ fn on_edit_passenger_name(cursive: &mut Cursive, name: &str, _size: usize) {
     }
 }
 
-fn passenger_view() -> Box<dyn View> {
+fn passenger_view(passenger: &Passenger) -> Box<dyn View> {
     LinearLayout::horizontal()
         .child(
             EditView::new()
                 .on_edit(on_edit_passenger_name)
-                .with_name("passenger_name")
+                .content(&passenger.name)
+                // .with_name("passenger_name")
                 .fixed_width(20),
         )
         .child(TextView::new(" "))
         .child(
             EditView::new()
                 .on_edit(on_edit_passenger_ffid)
+                .content(&passenger.ffid)
                 .max_content_width(6)
-                .fixed_width(7)
-                .with_name("passenger_ffid"),
+                // .with_name("passenger_ffid")
+                .fixed_width(7),
         )
         .child(TextView::new(" "))
         .child(
@@ -251,6 +255,13 @@ fn passenger_view() -> Box<dyn View> {
                     for row in ROWS {
                         view.add_item_str(row.to_string());
                     }
+                    // Selects the correct row for the passenger
+                    view.set_selection(
+                        ROWS.iter()
+                            .position(|row| *row == passenger.seat.row)
+                            .map(|idx| idx + 1) // `+ 1` to take into account the first item: `"*"`
+                            .unwrap_or(0),
+                    );
                 })
                 .on_submit(on_submit_passenger_seat_row)
                 .with_name("passenger_seat_row"),
@@ -264,6 +275,14 @@ fn passenger_view() -> Box<dyn View> {
                     for column in COLUMNS {
                         view.add_item_str(column.to_string());
                     }
+                    // Selects the correct column for the passenger
+                    view.set_selection(
+                        COLUMNS
+                            .iter()
+                            .position(|column| *column == passenger.seat.column)
+                            .map(|idx| idx + 1) // `+ 1` to take into account the first item: `"*"`
+                            .unwrap_or(0),
+                    );
                 })
                 .on_submit(on_submit_passenger_seat_column)
                 .with_name("passenger_seat_column"),
@@ -273,12 +292,17 @@ fn passenger_view() -> Box<dyn View> {
         .into_boxed_view()
 }
 
-fn all_passengers_view() -> Box<dyn View> {
+fn all_passengers_view(passengers: &[Passenger]) -> Box<dyn View> {
     Panel::new(
         LinearLayout::vertical()
             .child(TextView::new(
                 "Name                 FFID    Seat             ",
             ))
+            .with(|layout| {
+                for passenger in passengers {
+                    layout.add_child(passenger_view(passenger));
+                }
+            })
             .with_name("passengers")
             .scrollable(),
     )
@@ -348,7 +372,7 @@ fn save_view() -> Box<dyn View> {
         .into_boxed_view()
 }
 
-fn airline_seating_view() -> Box<dyn View> {
+fn airline_seating_view(flight_info: &FlightInfo) -> Box<dyn View> {
     Dialog::new()
         .title("Advanced Airline Seating Systems®")
         .button("Save", |s| s.add_layer(save_view()))
@@ -357,10 +381,10 @@ fn airline_seating_view() -> Box<dyn View> {
             LinearLayout::vertical()
                 .child(
                     LinearLayout::horizontal()
-                        .child(map_view())
-                        .child(costs_view()),
+                        .child(map_view(&flight_info.passengers))
+                        .child(costs_view(flight_info)),
                 )
-                .child(all_passengers_view())
+                .child(all_passengers_view(&flight_info.passengers))
                 .child(Button::new("Board Passenger", on_board_passenger))
                 .child(DummyView)
                 .child(TextView::new("©1960s Fresh Airlines").center()),
@@ -371,8 +395,9 @@ fn airline_seating_view() -> Box<dyn View> {
 fn main() -> Result<(), std::io::Error> {
     let mut app = Cursive::default();
 
-    app.set_user_data(FlightInfo::default());
-    app.add_layer(airline_seating_view());
+    let flight_info = FlightInfo::default();
+    app.add_layer(airline_seating_view(&flight_info));
+    app.set_user_data(flight_info);
 
     // This particular backend helps to reduce jittering
     let backend_init = || -> std::io::Result<Box<dyn cursive::backend::Backend>> {
