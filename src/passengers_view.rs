@@ -40,7 +40,7 @@ fn on_board_passenger(app: &mut Cursive) {
 
 fn focused_passenger_index(app: &mut Cursive) -> Option<usize> {
     app.call_on_name("passengers", |passengers: &mut LinearLayout| {
-        passengers.get_focus_index() - 1 // `- 1` because the first child isn't a passenger
+        passengers.get_focus_index()
     })
 }
 
@@ -147,7 +147,7 @@ fn on_unboard_passenger(app: &mut Cursive) {
     });
     if let Some(passenger_index) = passenger_index {
         let flight = app.flight();
-        flight.passengers.remove(passenger_index - 1); // `- 1` because the first child isn't a passenger
+        flight.passengers.remove(passenger_index);
     }
     costs_view::update_total_cost(app);
     map_view::update_map(app);
