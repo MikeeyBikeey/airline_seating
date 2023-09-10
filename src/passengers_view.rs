@@ -33,8 +33,8 @@ fn on_board_passenger(app: &mut Cursive) {
     app.call_on_name("passengers", |passengers: &mut LinearLayout| {
         passengers.add_child(single_passenger_view(&passenger));
     });
-    let flight_info = app.flight();
-    flight_info.passengers.push(passenger);
+    let flight = app.flight();
+    flight.passengers.push(passenger);
     costs_view::update_total_cost(app);
 }
 
@@ -62,15 +62,15 @@ fn on_submit_passenger_seat_column(app: &mut Cursive, column: &str) {
 
 fn on_edit_passenger_ffid(app: &mut Cursive, ffid: &str, _size: usize) {
     if let Some(passenger_index) = focused_passenger_index(app) {
-        let flight_info = app.flight();
-        flight_info.passengers[passenger_index].ffid = ffid.to_string();
+        let flight = app.flight();
+        flight.passengers[passenger_index].ffid = ffid.to_string();
     }
 }
 
 fn on_edit_passenger_name(app: &mut Cursive, name: &str, _size: usize) {
     if let Some(passenger_index) = focused_passenger_index(app) {
-        let flight_info = app.flight();
-        flight_info.passengers[passenger_index].name = name.to_string();
+        let flight = app.flight();
+        flight.passengers[passenger_index].name = name.to_string();
     }
 }
 
@@ -146,8 +146,8 @@ fn on_unboard_passenger(app: &mut Cursive) {
         passenger_index
     });
     if let Some(passenger_index) = passenger_index {
-        let flight_info = app.flight();
-        flight_info.passengers.remove(passenger_index - 1); // `- 1` because the first child isn't a passenger
+        let flight = app.flight();
+        flight.passengers.remove(passenger_index - 1); // `- 1` because the first child isn't a passenger
     }
     costs_view::update_total_cost(app);
     map_view::update_map(app);

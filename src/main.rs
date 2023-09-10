@@ -14,9 +14,9 @@ pub use map_view::map_view;
 fn main() -> Result<(), std::io::Error> {
     let mut app = cursive::default();
 
-    let flight_info = Flight::default();
-    app.add_layer(airline_seating_view(&flight_info));
-    app.set_user_data(flight_info);
+    let flight = Flight::default();
+    app.add_layer(airline_seating_view(&flight));
+    app.set_user_data(flight);
 
     app.try_run_with(backend_init)
 }

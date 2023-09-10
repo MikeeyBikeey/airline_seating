@@ -6,7 +6,7 @@ use cursive::{
     Cursive,
 };
 
-pub fn costs_view(flight_info: &Flight) -> Box<dyn View> {
+pub fn costs_view(flight: &Flight) -> Box<dyn View> {
     const DIGITS: usize = 4;
     Panel::new(PaddedView::lrtb(
         2,
@@ -19,7 +19,7 @@ pub fn costs_view(flight_info: &Flight) -> Box<dyn View> {
                     .child(
                         "Ticket Cost:   $",
                         EditView::new()
-                            .content(flight_info.ticket_cost.to_string())
+                            .content(flight.ticket_cost.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_ticket_cost)
                             .with_name("ticket_cost")
@@ -29,7 +29,7 @@ pub fn costs_view(flight_info: &Flight) -> Box<dyn View> {
                     .child(
                         "Bag Cost:      $",
                         EditView::new()
-                            .content(flight_info.bag_cost.to_string())
+                            .content(flight.bag_cost.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_cost)
                             .with_name("bag_cost")
@@ -39,7 +39,7 @@ pub fn costs_view(flight_info: &Flight) -> Box<dyn View> {
                     .child(
                         "Bag Count:",
                         EditView::new()
-                            .content(flight_info.bag_count.to_string())
+                            .content(flight.bag_count.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_count)
                             .with_name("bag_count")
@@ -48,7 +48,7 @@ pub fn costs_view(flight_info: &Flight) -> Box<dyn View> {
                     .delimiter(),
             )
             .child(
-                TextView::new(format!("Total Cost: ${}", flight_info.total_cost()))
+                TextView::new(format!("Total Cost: ${}", flight.total_cost()))
                     .with_name("total_cost"),
             ),
     ))
@@ -77,24 +77,24 @@ fn assure_edit_view_is_integer(edit_view: &mut EditView) -> i32 {
 
 fn on_edit_ticket_cost(app: &mut Cursive, _text: &str, _size: usize) {
     if let Some(ticket_cost) = app.call_on_name("ticket_cost", assure_edit_view_is_integer) {
-        let flight_info = app.flight();
-        flight_info.ticket_cost = ticket_cost;
+        let flight = app.flight();
+        flight.ticket_cost = ticket_cost;
         update_total_cost(app);
     }
 }
 
 fn on_edit_bag_cost(app: &mut Cursive, _text: &str, _size: usize) {
     if let Some(bag_cost) = app.call_on_name("bag_cost", assure_edit_view_is_integer) {
-        let flight_info = app.flight();
-        flight_info.bag_cost = bag_cost;
+        let flight = app.flight();
+        flight.bag_cost = bag_cost;
         update_total_cost(app);
     }
 }
 
 fn on_edit_bag_count(app: &mut Cursive, _text: &str, _size: usize) {
     if let Some(bag_count) = app.call_on_name("bag_count", assure_edit_view_is_integer) {
-        let flight_info = app.flight();
-        flight_info.bag_count = bag_count;
+        let flight = app.flight();
+        flight.bag_count = bag_count;
         update_total_cost(app);
     }
 }

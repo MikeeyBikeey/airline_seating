@@ -6,7 +6,7 @@ use cursive::{
     Cursive,
 };
 
-pub fn airline_seating_view(flight_info: &Flight) -> Box<dyn View> {
+pub fn airline_seating_view(flight: &Flight) -> Box<dyn View> {
     Dialog::new()
         .title("Advanced Airline Seating Systems®")
         .button("Load", |s| s.add_layer(load_view()))
@@ -16,10 +16,10 @@ pub fn airline_seating_view(flight_info: &Flight) -> Box<dyn View> {
             LinearLayout::vertical()
                 .child(
                     LinearLayout::horizontal()
-                        .child(map_view(&flight_info.passengers))
-                        .child(costs_view(flight_info)),
+                        .child(map_view(&flight.passengers))
+                        .child(costs_view(flight)),
                 )
-                .child(passengers_view(&flight_info.passengers))
+                .child(passengers_view(&flight.passengers))
                 .child(DummyView)
                 .child(TextView::new("©1960s Fresh Airlines").center()),
         )
@@ -47,12 +47,12 @@ fn on_confirm_save(app: &mut Cursive) {
     // TODO: simplify function
 
     // Saves the flight info
-    let flight_info = serde_json::to_string_pretty(app.flight()).unwrap();
+    let flight = serde_json::to_string_pretty(app.flight()).unwrap();
     let save_result = app.call_on_name("save_file_path", |view: &mut EditView| {
         let mut result = String::default();
         let path = view.get_content();
         if !std::path::Path::new(&*path).exists() {
-            if let Err(error) = std::fs::write(&*path, &flight_info) {
+            if let Err(error) = std::fs::write(&*path, &flight) {
                 result = error.to_string();
             }
         } else {
@@ -102,11 +102,11 @@ fn on_confirm_load(app: &mut Cursive) {
 
     // Reports errors and pops layer
     match load_result {
-        Some(Ok(flight_info)) => {
+        Some(Ok(flight)) => {
             app.pop_layer(); // pops this message view
             app.pop_layer(); // (hopefully) pops airline seating view
-            app.add_layer(airline_seating_view(&flight_info));
-            app.set_user_data(flight_info);
+            app.add_layer(airline_seating_view(&flight));
+            app.set_user_data(flight);
         }
         Some(Err(error)) => {
             show_alert(app, format!("Unable to load file: {}", error.to_string()));
