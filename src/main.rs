@@ -288,17 +288,47 @@ fn all_passengers_view() -> Box<dyn View> {
 
 // AIRLINE SEATING VIEW
 
+fn show_alert(cursive: &mut Cursive, message: String) {
+    cursive.add_layer(
+        Dialog::new()
+            .title("Alert")
+            .button("Close", |c| {
+                c.pop_layer();
+            })
+            .content(PaddedView::lrtb(
+                1,
+                1,
+                1,
+                0,
+                TextView::new(message).fixed_width(32),
+            )),
+    )
+}
+
 fn on_confirm_save(cursive: &mut Cursive) {
+    // TODO: simplify function
+
+    // Saves the flight info
     let flight_info = serde_json::to_string_pretty(cursive.flight_info()).unwrap();
-    cursive.call_on_name("save_file_path", |view: &mut EditView| {
+    let save_result = cursive.call_on_name("save_file_path", |view: &mut EditView| {
+        let mut result = String::default();
         let path = view.get_content();
-        // TODO: report to user if file already exists
         if !std::path::Path::new(&*path).exists() {
-            // TODO: report errors to user
-            std::fs::write(&*path, &flight_info);
+            if let Err(error) = std::fs::write(&*path, &flight_info) {
+                result = error.to_string();
+            }
+        } else {
+            result = format!("File already exists at path: \"{}\"", path);
         }
+        result
     });
-    cursive.pop_layer();
+
+    // Reports errors and pops layer
+    if save_result.as_deref() == Some("") {
+        cursive.pop_layer();
+    } else if let Some(save_result) = save_result {
+        show_alert(cursive, format!("Unable to save file: {}", save_result));
+    }
 }
 
 fn save_view() -> Box<dyn View> {
