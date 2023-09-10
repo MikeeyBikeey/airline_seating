@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use cursive::{
     traits::*,
     utils::lines::simple::Row,
@@ -286,10 +288,41 @@ fn all_passengers_view() -> Box<dyn View> {
 
 // AIRLINE SEATING VIEW
 
+fn on_confirm_save(cursive: &mut Cursive) {
+    let flight_info = serde_json::to_string_pretty(cursive.flight_info()).unwrap();
+    cursive.call_on_name("save_file_path", |view: &mut EditView| {
+        let path = view.get_content();
+        // TODO: report to user if file already exists
+        if !std::path::Path::new(&*path).exists() {
+            // TODO: report errors to user
+            std::fs::write(&*path, &flight_info);
+        }
+    });
+    cursive.pop_layer();
+}
+
+fn save_view() -> Box<dyn View> {
+    Dialog::new()
+        .title("Save File Path")
+        .button("Save", on_confirm_save)
+        .button("Cancel", |c| {
+            c.pop_layer();
+        })
+        .content(PaddedView::lrtb(
+            1,
+            1,
+            1,
+            0,
+            EditView::new().with_name("save_file_path").fixed_width(32),
+        ))
+        .into_boxed_view()
+}
+
 fn airline_seating_view() -> Box<dyn View> {
     Dialog::new()
         .title("Advanced Airline Seating Systems®")
-        .button("Ok", |s| s.quit())
+        .button("Save", |s| s.add_layer(save_view()))
+        .button("Submit", |s| s.quit())
         .content(
             LinearLayout::vertical()
                 .child(
