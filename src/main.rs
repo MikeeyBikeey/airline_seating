@@ -18,9 +18,9 @@ const ROWS: [char; 9] = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 // COSTS VIEW
 
-fn update_total_cost(cursive: &mut Cursive) {
-    let total_cost = cursive.flight().total_cost();
-    cursive.call_on_name("total_cost", |text_view: &mut TextView| {
+fn update_total_cost(app: &mut Cursive) {
+    let total_cost = app.flight().total_cost();
+    app.call_on_name("total_cost", |text_view: &mut TextView| {
         text_view.set_content(format!("Total Cost: ${}", total_cost));
     });
 }
@@ -37,31 +37,31 @@ fn assure_edit_view_is_integer(edit_view: &mut EditView) -> i32 {
     text_numbers.parse().unwrap_or(0)
 }
 
-fn on_edit_ticket_cost(cursive: &mut Cursive, _text: &str, _size: usize) {
-    if let Some(ticket_cost) = cursive.call_on_name("ticket_cost", assure_edit_view_is_integer) {
-        let flight = cursive.flight();
-        flight.ticket_cost = ticket_cost;
-        update_total_cost(cursive);
+fn on_edit_ticket_cost(app: &mut Cursive, _text: &str, _size: usize) {
+    if let Some(ticket_cost) = app.call_on_name("ticket_cost", assure_edit_view_is_integer) {
+        let flight_info = app.flight();
+        flight_info.ticket_cost = ticket_cost;
+        update_total_cost(app);
     }
 }
 
-fn on_edit_bag_cost(cursive: &mut Cursive, _text: &str, _size: usize) {
-    if let Some(bag_cost) = cursive.call_on_name("bag_cost", assure_edit_view_is_integer) {
-        let flight = cursive.flight();
-        flight.bag_cost = bag_cost;
-        update_total_cost(cursive);
+fn on_edit_bag_cost(app: &mut Cursive, _text: &str, _size: usize) {
+    if let Some(bag_cost) = app.call_on_name("bag_cost", assure_edit_view_is_integer) {
+        let flight_info = app.flight();
+        flight_info.bag_cost = bag_cost;
+        update_total_cost(app);
     }
 }
 
-fn on_edit_bag_count(cursive: &mut Cursive, _text: &str, _size: usize) {
-    if let Some(bag_count) = cursive.call_on_name("bag_count", assure_edit_view_is_integer) {
-        let flight = cursive.flight();
-        flight.bag_count = bag_count;
-        update_total_cost(cursive);
+fn on_edit_bag_count(app: &mut Cursive, _text: &str, _size: usize) {
+    if let Some(bag_count) = app.call_on_name("bag_count", assure_edit_view_is_integer) {
+        let flight_info = app.flight();
+        flight_info.bag_count = bag_count;
+        update_total_cost(app);
     }
 }
 
-fn costs_view(flight: &Flight) -> Box<dyn View> {
+fn costs_view(flight_info: &Flight) -> Box<dyn View> {
     const DIGITS: usize = 4;
     Panel::new(PaddedView::lrtb(
         2,
@@ -74,7 +74,7 @@ fn costs_view(flight: &Flight) -> Box<dyn View> {
                     .child(
                         "Ticket Cost:   $",
                         EditView::new()
-                            .content(flight.ticket_cost.to_string())
+                            .content(flight_info.ticket_cost.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_ticket_cost)
                             .with_name("ticket_cost")
@@ -84,7 +84,7 @@ fn costs_view(flight: &Flight) -> Box<dyn View> {
                     .child(
                         "Bag Cost:      $",
                         EditView::new()
-                            .content(flight.bag_cost.to_string())
+                            .content(flight_info.bag_cost.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_cost)
                             .with_name("bag_cost")
@@ -94,7 +94,7 @@ fn costs_view(flight: &Flight) -> Box<dyn View> {
                     .child(
                         "Bag Count:",
                         EditView::new()
-                            .content(flight.bag_count.to_string())
+                            .content(flight_info.bag_count.to_string())
                             .max_content_width(DIGITS)
                             .on_edit(on_edit_bag_count)
                             .with_name("bag_count")
@@ -103,7 +103,7 @@ fn costs_view(flight: &Flight) -> Box<dyn View> {
                     .delimiter(),
             )
             .child(
-                TextView::new(format!("Total Cost: ${}", flight.total_cost()))
+                TextView::new(format!("Total Cost: ${}", flight_info.total_cost()))
                     .with_name("total_cost"),
             ),
     ))
@@ -122,13 +122,13 @@ fn is_seat_taken(passengers: &[Passenger], column: char, row: char) -> bool {
     false
 }
 
-fn update_map(cursive: &mut Cursive) {
+fn update_map(app: &mut Cursive) {
     // `passengers` is temporarily taken to avoid borrow issues
-    let passengers = std::mem::take(&mut cursive.flight().passengers);
-    cursive.call_on_name("map", |map: &mut TextView| {
+    let passengers = std::mem::take(&mut app.flight().passengers);
+    app.call_on_name("map", |map: &mut TextView| {
         map.set_content(create_map_display(&passengers))
     });
-    cursive.flight().passengers = passengers;
+    app.flight().passengers = passengers;
 }
 
 /// Returns a `String` for displaying on the map.
@@ -168,63 +168,63 @@ fn map_view(passengers: &[Passenger]) -> Box<dyn View> {
 
 // PASSENGERS VIEW
 
-fn focused_passenger_index(cursive: &mut Cursive) -> Option<usize> {
-    cursive.call_on_name("passengers", |passengers: &mut LinearLayout| {
+fn focused_passenger_index(app: &mut Cursive) -> Option<usize> {
+    app.call_on_name("passengers", |passengers: &mut LinearLayout| {
         passengers.get_focus_index() - 1 // `- 1` because the first child isn't a passenger
     })
 }
 
-fn on_board_passenger(cursive: &mut Cursive) {
+fn on_board_passenger(app: &mut Cursive) {
     let passenger = Passenger::default();
-    cursive.call_on_name("passengers", |passengers: &mut LinearLayout| {
+    app.call_on_name("passengers", |passengers: &mut LinearLayout| {
         passengers.add_child(passenger_view(&passenger));
     });
-    let flight = cursive.flight();
-    flight.passengers.push(passenger);
-    update_total_cost(cursive);
+    let flight_info = app.flight();
+    flight_info.passengers.push(passenger);
+    update_total_cost(app);
 }
 
-fn on_unboard_passenger(cursive: &mut Cursive) {
-    let passenger_index = cursive.call_on_name("passengers", |passengers: &mut LinearLayout| {
+fn on_unboard_passenger(app: &mut Cursive) {
+    let passenger_index = app.call_on_name("passengers", |passengers: &mut LinearLayout| {
         let passenger_index = passengers.get_focus_index();
         passengers.remove_child(passenger_index);
         passenger_index
     });
     if let Some(passenger_index) = passenger_index {
-        let flight = cursive.flight();
-        flight.passengers.remove(passenger_index - 1); // `- 1` because the first child isn't a passenger
+        let flight_info = app.flight();
+        flight_info.passengers.remove(passenger_index - 1); // `- 1` because the first child isn't a passenger
     }
-    update_total_cost(cursive);
-    update_map(cursive);
+    update_total_cost(app);
+    update_map(app);
 }
 
-fn on_submit_passenger_seat_row(cursive: &mut Cursive, row: &str) {
-    if let Some(passenger_index) = focused_passenger_index(cursive) {
-        let passenger = &mut cursive.flight().passengers[passenger_index];
+fn on_submit_passenger_seat_row(app: &mut Cursive, row: &str) {
+    if let Some(passenger_index) = focused_passenger_index(app) {
+        let passenger = &mut app.flight().passengers[passenger_index];
         passenger.seat.row = row.chars().next().unwrap();
     }
-    update_map(cursive);
+    update_map(app);
 }
 
-fn on_submit_passenger_seat_column(cursive: &mut Cursive, column: &str) {
-    if let Some(passenger_index) = focused_passenger_index(cursive) {
-        let passenger = &mut cursive.flight().passengers[passenger_index];
+fn on_submit_passenger_seat_column(app: &mut Cursive, column: &str) {
+    if let Some(passenger_index) = focused_passenger_index(app) {
+        let passenger = &mut app.flight().passengers[passenger_index];
         passenger.seat.column = column.chars().next().unwrap();
     }
-    update_map(cursive);
+    update_map(app);
 }
 
-fn on_edit_passenger_ffid(cursive: &mut Cursive, ffid: &str, _size: usize) {
-    if let Some(passenger_index) = focused_passenger_index(cursive) {
-        let flight = cursive.flight();
-        flight.passengers[passenger_index].ffid = ffid.to_string();
+fn on_edit_passenger_ffid(app: &mut Cursive, ffid: &str, _size: usize) {
+    if let Some(passenger_index) = focused_passenger_index(app) {
+        let flight_info = app.flight();
+        flight_info.passengers[passenger_index].ffid = ffid.to_string();
     }
 }
 
-fn on_edit_passenger_name(cursive: &mut Cursive, name: &str, _size: usize) {
-    if let Some(passenger_index) = focused_passenger_index(cursive) {
-        let flight = cursive.flight();
-        flight.passengers[passenger_index].name = name.to_string();
+fn on_edit_passenger_name(app: &mut Cursive, name: &str, _size: usize) {
+    if let Some(passenger_index) = focused_passenger_index(app) {
+        let flight_info = app.flight();
+        flight_info.passengers[passenger_index].name = name.to_string();
     }
 }
 
@@ -312,12 +312,12 @@ fn all_passengers_view(passengers: &[Passenger]) -> Box<dyn View> {
 
 // AIRLINE SEATING VIEW
 
-fn show_alert<T: Into<String>>(cursive: &mut Cursive, message: T) {
-    cursive.add_layer(
+fn show_alert<T: Into<String>>(app: &mut Cursive, message: T) {
+    app.add_layer(
         Dialog::new()
             .title("Alert")
-            .button("Close", |c| {
-                c.pop_layer();
+            .button("Close", |app| {
+                app.pop_layer();
             })
             .content(PaddedView::lrtb(
                 1,
@@ -329,16 +329,16 @@ fn show_alert<T: Into<String>>(cursive: &mut Cursive, message: T) {
     )
 }
 
-fn on_confirm_save(cursive: &mut Cursive) {
+fn on_confirm_save(app: &mut Cursive) {
     // TODO: simplify function
 
     // Saves the flight info
-    let flight = serde_json::to_string_pretty(cursive.flight()).unwrap();
-    let save_result = cursive.call_on_name("save_file_path", |view: &mut EditView| {
+    let flight_info = serde_json::to_string_pretty(app.flight()).unwrap();
+    let save_result = app.call_on_name("save_file_path", |view: &mut EditView| {
         let mut result = String::default();
         let path = view.get_content();
         if !std::path::Path::new(&*path).exists() {
-            if let Err(error) = std::fs::write(&*path, &flight) {
+            if let Err(error) = std::fs::write(&*path, &flight_info) {
                 result = error.to_string();
             }
         } else {
@@ -349,11 +349,11 @@ fn on_confirm_save(cursive: &mut Cursive) {
 
     // Reports errors and pops layer
     if save_result.as_deref() == Some("") {
-        cursive.pop_layer();
+        app.pop_layer();
     } else if let Some(save_result) = save_result {
-        show_alert(cursive, format!("Unable to save file: {}", save_result));
+        show_alert(app, format!("Unable to save file: {}", save_result));
     } else {
-        show_alert(cursive, "An unknown error occurred while saving file.")
+        show_alert(app, "An unknown error occurred while saving file.")
     }
 }
 
@@ -361,8 +361,8 @@ fn save_view() -> Box<dyn View> {
     Dialog::new()
         .title("Save File Path")
         .button("Save", on_confirm_save)
-        .button("Cancel", |c| {
-            c.pop_layer();
+        .button("Cancel", |app| {
+            app.pop_layer();
         })
         .content(PaddedView::lrtb(
             1,
@@ -374,11 +374,11 @@ fn save_view() -> Box<dyn View> {
         .into_boxed_view()
 }
 
-fn on_confirm_load(cursive: &mut Cursive) {
+fn on_confirm_load(app: &mut Cursive) {
     // // TODO: simplify function
 
     // Loads and parses the flight info
-    let load_result = cursive.call_on_name(
+    let load_result = app.call_on_name(
         "load_file_path",
         |view: &mut EditView| -> Result<Flight, Box<dyn std::error::Error>> {
             let path = view.get_content();
@@ -388,19 +388,16 @@ fn on_confirm_load(cursive: &mut Cursive) {
 
     // Reports errors and pops layer
     match load_result {
-        Some(Ok(flight)) => {
-            cursive.pop_layer(); // pops this message view
-            cursive.pop_layer(); // (hopefully) pops airline seating view
-            cursive.add_layer(airline_seating_view(&flight));
-            cursive.set_user_data(flight);
+        Some(Ok(flight_info)) => {
+            app.pop_layer(); // pops this message view
+            app.pop_layer(); // (hopefully) pops airline seating view
+            app.add_layer(airline_seating_view(&flight_info));
+            app.set_user_data(flight_info);
         }
         Some(Err(error)) => {
-            show_alert(
-                cursive,
-                format!("Unable to load file: {}", error.to_string()),
-            );
+            show_alert(app, format!("Unable to load file: {}", error.to_string()));
         }
-        None => show_alert(cursive, "An unknown error occurred while loading file."),
+        None => show_alert(app, "An unknown error occurred while loading file."),
     }
 }
 
@@ -408,8 +405,8 @@ fn load_view() -> Box<dyn View> {
     Dialog::new()
         .title("Load File Path")
         .button("Load", on_confirm_load)
-        .button("Cancel", |c| {
-            c.pop_layer();
+        .button("Cancel", |app| {
+            app.pop_layer();
         })
         .content(PaddedView::lrtb(
             1,
@@ -421,7 +418,7 @@ fn load_view() -> Box<dyn View> {
         .into_boxed_view()
 }
 
-fn airline_seating_view(flight: &Flight) -> Box<dyn View> {
+fn airline_seating_view(flight_info: &Flight) -> Box<dyn View> {
     Dialog::new()
         .title("Advanced Airline Seating Systems®")
         .button("Load", |s| s.add_layer(load_view()))
@@ -431,10 +428,10 @@ fn airline_seating_view(flight: &Flight) -> Box<dyn View> {
             LinearLayout::vertical()
                 .child(
                     LinearLayout::horizontal()
-                        .child(map_view(&flight.passengers))
-                        .child(costs_view(flight)),
+                        .child(map_view(&flight_info.passengers))
+                        .child(costs_view(flight_info)),
                 )
-                .child(all_passengers_view(&flight.passengers))
+                .child(all_passengers_view(&flight_info.passengers))
                 .child(Button::new("Board Passenger", on_board_passenger))
                 .child(DummyView)
                 .child(TextView::new("©1960s Fresh Airlines").center()),
@@ -445,9 +442,9 @@ fn airline_seating_view(flight: &Flight) -> Box<dyn View> {
 fn main() -> Result<(), std::io::Error> {
     let mut app = Cursive::default();
 
-    let flight = Flight::default();
-    app.add_layer(airline_seating_view(&flight));
-    app.set_user_data(flight);
+    let flight_info = Flight::default();
+    app.add_layer(airline_seating_view(&flight_info));
+    app.set_user_data(flight_info);
 
     // This particular backend helps to reduce jittering
     let backend_init = || -> std::io::Result<Box<dyn cursive::backend::Backend>> {
